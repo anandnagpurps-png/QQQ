@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Экотропа — Главная</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, sans-serif; 
+      padding: 0; 
+      margin: 0; 
+      background: #f4f9f4; 
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    #map { 
+      height: 100%; 
+      width: 100%; 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      z-index: 1; 
+    }
+
+    #bottom-panel { 
+      position: absolute; 
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 600px;
+      background: white; 
+      padding: 25px; 
+      box-sizing: border-box;
+      /* Лёгкая тень для всей панели, чтобы она не «прилипала» к фону */
+      box-shadow: 0 10px 24px rgba(0,0,0,0.24), 0 0 0 1px rgba(0,0,0,0.14);
+      border-radius: 18px;
+      z-index: 10; 
+      text-align: center;
+    }
+
+    .panel-title { 
+      font-weight: bold; 
+      font-size: 19px; 
+      color: #2c3e50; 
+      margin-bottom: 18px; 
+      letter-spacing: 0.5px;
+    }
+
+    /* Стили кнопок — теперь они выглядят как аккуратные карточки */
+    .panel-btn { 
+      display: block; 
+      width: 100%; 
+      max-width: 320px; 
+      margin: 0 auto 14px;
+      padding: 16px 12px; 
+      text-align: center; 
+      text-decoration: none; 
+      color: white;
+      border: none;
+      border-radius: 14px; 
+      font-weight: 600; 
+      font-size: 17px;
+      cursor: pointer;
+      
+      /* Тень как у карточек: мягкая, с небольшим смещением */
+      box-shadow: 0 8px 18px rgba(0,0,0,0.24), 
+                  0 2px 4px rgba(0,0,0,0.14);
+      
+      transition: transform 0.15s ease, 
+                  box-shadow 0.2s ease, 
+                  background-color 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel-btn:active {
+      transform: scale(0.96);
+      /* При нажатии тень становится чуть плотнее и меньше */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.14), 
+                  0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .btn-plants { 
+      background: linear-gradient(135deg, #6c63ff 0%, #5b50e8 100%); 
+      border: 1px solid rgba(91, 80, 232, 0.6); 
+    }
+    .btn-plants:hover {
+      background: linear-gradient(135deg, #7a72ff 0%, #6a5fe0 100%);
+      box-shadow: 0 10px 22px rgba(108, 99, 255, 0.3), 
+                  0 3px 6px rgba(0,0,0,0.08);
+    }
+
+    .btn-quiz { 
+      background: linear-gradient(135deg, #ff8f00 0%, #ff7500 100%); 
+      border: 1px solid rgba(255, 117, 0, 0.7); 
+    }
+    .btn-quiz:hover {
+      background: linear-gradient(135deg, #ffa033 0%, #ff8a1a 100%);
+      box-shadow: 0 10px 22px rgba(255, 143, 0, 0.32), 
+                  0 3px 6px rgba(0,0,0,0.08);
+    }
+
+    .btn-presentation { 
+      background: linear-gradient(135deg, #4a148c 0%, #3b106f 100%); 
+      border: 1px solid rgba(59, 16, 111, 0.7); 
+    }
+    .btn-presentation:hover {
+      background: linear-gradient(135deg, #5d1a9e 0%, #4b1480 100%);
+      box-shadow: 0 10px 22px rgba(74, 20, 140, 0.4), 
+                  0 3px 6px rgba(0,0,0,0.08);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+
+  <div id="bottom-panel">
+    <div class="panel-title">🌿 Экотропа</div>
+    
+    <a href="/plants" class="panel-btn btn-plants">Энциклопедия растений</a>
+    <a href="/quiz" class="panel-btn btn-quiz">Викторина</a>
+
+    <a href="https://docs.google.com/presentation/d/e/2PACX-1vSPpdY_PfaBpLn56Jr98o6OcQQFTiNsHPMND4uypYAVzqu85AhywvzQLHihdalzwEintGbN9n6Kemj0/pub?start=false&loop=true&delayms=3000"
+       class="panel-btn btn-presentation"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="Открыть презентацию в новой вкладке">
+      📽 Презентация экотропы
+    </a>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const ecoBounds = [
+      [50.5630, 36.5470], 
+      [50.5650, 36.5500]  
+    ];
+
+    const defaultCenter = [50.5640, 36.5485];
+    const defaultZoom = 15;
+    const minZoom = 14;
+    const maxZoom = 19;
+
+    var map = L.map('map', {
+      center: defaultCenter,
+      zoom: defaultZoom,
+      minZoom: minZoom,
+      maxZoom: maxZoom,
+      maxBounds: ecoBounds,
+      maxBoundsViscosity: 1.0
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      minZoom: minZoom,
+      maxZoom: 19
+    }).addTo(map);
+
+    function loadTrailData() {
+      fetch('/api/trail')
+        .then(response => {
+          if (!response.ok) throw new Error('Network error or 404');
+          return response.json();
+        })
+        .then(data => {
+          console.log('Trail data:', data);
+
+          if (data.solid && data.solid.length >= 2) {
+            L.polyline(data.solid.map(p => [p.lat, p.lng]), {
+              color: '#3a5a80', weight: 4, opacity: 0.95
+            }).addTo(map);
+          }
+
+          if (data.milestones) {
+            data.milestones.forEach(m => {
+              const popupText = `🟡 Точка №${m.label || 'X'}`;
+              L.circleMarker([m.lat, m.lng], {
+                radius: 7, color: '#d32f2f', fillColor: '#fff',
+                fillOpacity: 1, weight: 2
+              }).addTo(map).bindPopup(popupText);
+            });
+          }
+
+          if (data.start) {
+            var startIcon = L.icon({
+              iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+              iconSize: [25, 41], iconAnchor: [12, 41]
+            });
+            L.marker([data.start.lat, data.start.lng], { icon: startIcon })
+              .addTo(map)
+              .bindPopup('🟢 СТАРТ экотропы')
+              .openPopup();
+          }
+
+          if (data.finish) {
+            var finishIcon = L.icon({
+              iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+              iconSize: [25, 41], iconAnchor: [12, 41]
+            });
+            const title = data.finish.title ? `🔴 ФИНИШ: ${data.finish.title}` : '🔴 ФИНИШ экотропы';
+            L.marker([data.finish.lat, data.finish.lng], { icon: finishIcon })
+              .addTo(map)
+              .bindPopup(title);
+          }
+
+          const allPoints = [];
+          if (data.solid) allPoints.push(...data.solid);
+          if (data.milestones) allPoints.push(...data.milestones);
+          if (data.start) allPoints.push(data.start);
+          if (data.finish) allPoints.push(data.finish);
+
+          if (allPoints.length > 1) {
+            const bounds = L.latLngBounds(allPoints.map(p => [p.lat, p.lng]));
+            setTimeout(() => {
+              map.fitBounds(bounds, { padding: [40, 40] });
+            }, 100);
+          } else if (data.start) {
+            map.setView([data.start.lat, data.start.lng], defaultZoom);
+          }
+        })
+        .catch(err => {
+          console.error('Trail load error:', err);
+        });
+    }
+
+    loadTrailData();
+  </script>
+</body>
+</html>
